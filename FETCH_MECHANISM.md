@@ -38,22 +38,28 @@ For RSS subscriptions, TrendRadar fetches the data directly from the source.
     *   The `RSSFetcher` class manages the fetching of configured feeds.
     *   The `RSSParser` class in `trendradar/crawler/rss/parser.py` handles the parsing of the XML/JSON response.
 
+## The "Magic" Behind the API: NewsNow
+
+You might wonder why a single API endpoint (`https://newsnow.busiyi.world/api/s`) can return data from so many different platforms (Weibo, Zhihu, etc.) and if there is "hidden code".
+
+The answer is **yes**, the heavy lifting is done by the upstream server, but the code is **not hidden**—it is open source.
+
+*   **Upstream Project**: [NewsNow (ourongxing/newsnow)](https://github.com/ourongxing/newsnow)
+*   **How it works**:
+    *   **Server-Side Scraping**: The `newsnow` server runs independent scrapers for each platform.
+    *   **Reverse Engineering**: The authors of `newsnow` have analyzed the internal APIs or HTML structures of platforms like Weibo and Zhihu to extract the "Hot List" data.
+    *   **Aggregation**: The server standardizes this data into a unified JSON format.
+    *   **TrendRadar's Role**: TrendRadar acts as a *client* to this server, fetching the pre-processed data to perform its own analysis (keyword filtering, trend tracking, AI analysis).
+
+So, the "reverse cracking" logic exists, but it resides in the [NewsNow repository](https://github.com/ourongxing/newsnow), not in TrendRadar. This architecture decouples the complexity of maintaining dozens of scrapers from the logic of analyzing and pushing news.
+
 ## Technical Analysis
 
 ### API vs. Reverse Engineering
 
-The user asked whether the system uses an API or "reverse cracking" (reverse engineering).
-
 *   **From TrendRadar's Perspective**: It uses **APIs**.
     *   It uses the public-facing API of the `newsnow` service.
     *   It uses standard HTTP/RSS protocols.
-    *   It does **not** contain code to reverse engineer the frontend or internal APIs of platforms like Weibo or Zhihu.
 
-*   **Underlying Mechanism (Inferred)**:
-    *   The `newsnow` service (the upstream provider) likely uses techniques such as **reverse engineering** of internal mobile APIs or **web scraping** to aggregate data from these platforms, as most of them do not offer official public APIs for "hot lists".
-    *   However, this complexity is abstracted away from TrendRadar.
-
-### Domestic Data Sources
-
-*   **Yes**, the data originates from domestic Chinese platforms (Weibo, Baidu, Toutiao, etc.).
-*   TrendRadar accesses this data via the `newsnow` API, which aggregates these domestic sources.
+*   **From the Data Source Perspective**: It involves **Reverse Engineering/Scraping**.
+    *   The `newsnow` service uses techniques such as reverse engineering of internal mobile APIs or web scraping to aggregate data from these platforms.
